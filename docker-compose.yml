@@ -1,0 +1,37 @@
+services:
+  api:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    env_file:
+      - .env
+    networks:
+      - app_net
+    volumes:
+      - ./app:/app/app:ro
+      - app_static:/app/static  # example app data
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-app}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-app_password}
+      POSTGRES_DB: ${DATABASE_NAME:-app_db}
+    ports:
+      - "5432:5432"
+    networks:
+      - app_net
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  db_data:
+  app_static:
